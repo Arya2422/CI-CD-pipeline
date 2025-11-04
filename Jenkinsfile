@@ -26,23 +26,22 @@ pipeline {
     }
 }
 
-stage('Test Container') {
+    stage('Test Container') {
     steps {
         script {
-            echo '🧩 Starting container test stage...'
-            powershell '''
-                Write-Host "Testing if Docker image was built successfully..."
-                docker images | Select-String "flask-mysql-app"
-                
-                Write-Host "Checking if port 5000 is available..."
-                $portInUse = Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue
-                if ($portInUse) {
-                    Write-Host "Port 5000 is in use. Please free it before deployment."
-                    exit 1
-                } else {
-                    Write-Host "Port 5000 is available."
-                }
-            '''
+            echo "🧩 Starting container test stage..."
+
+            // Remove existing container if it exists
+            bat 'docker rm -f test_container || exit 0'
+
+            // Run the new test container
+            bat 'docker run -d -p 5000:5000 --name test_container %DOCKERHUB_USER%/%IMAGE_NAME%:latest'
+            bat 'timeout /t 5 /nobreak'
+            bat 'curl -f http://localhost:5000 || (echo ❌ Flask app test failed! && exit 1)'
+
+            // Stop and remove after test
+            bat 'docker stop test_container && docker rm test_container'
+            echo "✅ Container test completed successfully!"
         }
     }
 }
