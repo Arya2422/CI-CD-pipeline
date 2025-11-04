@@ -26,7 +26,7 @@ pipeline {
     }
 }
 
-  stage('Test Container') {
+stage('Test Container') {
     steps {
         script {
             echo "🧩 Starting container test stage..."
@@ -36,7 +36,17 @@ pipeline {
 
             // Run the new test container
             bat 'docker run -d -p 5000:5000 --name test_container %DOCKERHUB_USER%/%IMAGE_NAME%:latest'
-            bat 'ping 127.0.0.1 -n 6 > nul'
+            
+            // Wait longer for the app to start (15 seconds)
+            bat 'ping 127.0.0.1 -n 16 > nul'
+            
+            // Check if container is still running
+            bat 'docker ps -f name=test_container'
+            
+            // Check container logs
+            bat 'docker logs test_container'
+            
+            // Test the endpoint
             bat 'curl -f http://localhost:5000 || (echo ❌ Flask app test failed! && exit 1)'
 
             // Stop and remove after test
