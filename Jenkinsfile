@@ -26,20 +26,26 @@ pipeline {
     }
 }
 
-        stage('Test Container') {
-            steps {
-                script {
-                    echo "🧪 Starting test container..."
-                    bat "docker run -d -p 5000:5000 --name test_container %DOCKERHUB_USER%/%IMAGE_NAME%:latest"
-                    echo "⚙️ Waiting for container to initialize..."
-                    bat 'timeout /t 10'
-                    echo "🌐 Checking if application is reachable..."
-                    bat 'curl http://localhost:5000'
-                    echo "🧹 Cleaning up test container..."
-                    bat 'docker stop test_container && docker rm test_container'
-                }
-            }
+    stage('Test Container') {
+    steps {
+        script {
+            echo "🧩 Starting container test stage..."
+
+            // Remove existing container if it exists
+            sh 'docker rm -f test_container || true'
+
+            // Run the new test container
+            sh 'docker run -d -p 5000:5000 --name test_container $DOCKERHUB_USER/$IMAGE_NAME:latest'
+            sh 'sleep 5'
+            sh 'curl -f http://localhost:5000 || (echo "❌ Flask app test failed!" && exit 1)'
+
+            // Stop and remove after test
+            sh 'docker stop test_container && docker rm test_container'
+            echo "✅ Container test completed successfully!"
         }
+    }
+}
+
 
         stage('Push to Docker Hub') {
             steps {
