@@ -17,16 +17,14 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    echo "🏗️ Starting Docker image build..."
-                    bat "docker build -t %DOCKERHUB_USER%/%IMAGE_NAME%:latest ./app"
-                    echo "✅ Docker image built successfully!"
-                    bat 'docker images'
-                }
-            }
+    stage('Build Docker Image') {
+    steps {
+        echo "🏗️ Starting Docker image build..."
+        script {
+            bat 'docker build -t arya2422/flask-mysql-app:latest ./app'
         }
+    }
+}
 
         stage('Test Container') {
             steps {
