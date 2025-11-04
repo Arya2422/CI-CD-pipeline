@@ -2,32 +2,33 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-login')
-        IMAGE_NAME = "yourdockerhubusername/flask-mysql-app"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        IMAGE_NAME = 'flask-mysql-app'
+        DOCKERHUB_USER = 'arya2422'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/yourusername/your-repo.git'
+                git branch: 'main', url: 'https://github.com/Arya2422/CI-CD-pipeline.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $IMAGE_NAME:latest ./app'
+                    sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest ./app'
                 }
             }
         }
 
-        stage('Run Container for Testing') {
+        stage('Test Container') {
             steps {
                 script {
-                    sh 'docker run -d --name test_app -p 5000:5000 $IMAGE_NAME:latest'
-                    sh 'sleep 10'
-                    sh 'curl -f http://localhost:5000 || exit 1'
-                    sh 'docker stop test_app && docker rm test_app'
+                    sh 'docker run -d -p 5000:5000 --name test_container $DOCKERHUB_USER/$IMAGE_NAME:latest'
+                    sh 'sleep 5'
+                    sh 'curl http://localhost:5000'
+                    sh 'docker stop test_container && docker rm test_container'
                 }
             }
         }
@@ -35,16 +36,22 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                    sh 'docker push $IMAGE_NAME:latest'
+                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    sh 'docker push $DOCKERHUB_USER/$IMAGE_NAME:latest'
                 }
             }
         }
+    }
 
-        stage('Deploy (Optional)') {
-            steps {
-                echo 'Deployment stage — can be extended for servers, EC2, or Kubernetes.'
-            }
+    post {
+        success {
+            echo "✅ BUILD SUCCESSFUL! 🎉 Docker image pushed to Docker Hub: $DOCKERHUB_USER/$IMAGE_NAME:latest"
+        }
+        failure {
+            echo "❌ BUILD FAILED! Check logs for details."
+        }
+        always {
+            echo "📦 Pipeline completed."
         }
     }
 }
