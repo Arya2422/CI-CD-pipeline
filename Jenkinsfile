@@ -26,7 +26,7 @@ pipeline {
     }
 }
 
-    stage('Test Container') {
+  stage('Test Container') {
     steps {
         script {
             echo "🧩 Starting container test stage..."
@@ -36,7 +36,7 @@ pipeline {
 
             // Run the new test container
             bat 'docker run -d -p 5000:5000 --name test_container %DOCKERHUB_USER%/%IMAGE_NAME%:latest'
-            bat 'timeout /t 5 /nobreak'
+            bat 'ping 127.0.0.1 -n 6 > nul'
             bat 'curl -f http://localhost:5000 || (echo ❌ Flask app test failed! && exit 1)'
 
             // Stop and remove after test
@@ -45,7 +45,6 @@ pipeline {
         }
     }
 }
-
 
         stage('Push to Docker Hub') {
             steps {
