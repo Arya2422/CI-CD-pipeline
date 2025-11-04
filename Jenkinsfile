@@ -13,18 +13,17 @@ pipeline {
                 echo "📥 Starting to clone repository..."
                 git branch: 'main', url: 'https://github.com/Arya2422/CI-CD-pipeline.git'
                 echo "✅ Repository cloned successfully from GitHub."
-                sh 'ls -al'  // Show cloned files
+                bat 'dir'  // Windows equivalent of 'ls -al'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "🏗️ Starting Docker image build for: $DOCKERHUB_USER/$IMAGE_NAME:latest"
-                    sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest ./app'
+                    echo "🏗️ Starting Docker image build..."
+                    bat "docker build -t %DOCKERHUB_USER%/%IMAGE_NAME%:latest ./app"
                     echo "✅ Docker image built successfully!"
-                    echo "🔍 Listing Docker images for verification..."
-                    sh 'docker images | grep $IMAGE_NAME'
+                    bat 'docker images'
                 }
             }
         }
@@ -33,14 +32,13 @@ pipeline {
             steps {
                 script {
                     echo "🧪 Starting test container..."
-                    sh 'docker run -d -p 5000:5000 --name test_container $DOCKERHUB_USER/$IMAGE_NAME:latest'
+                    bat "docker run -d -p 5000:5000 --name test_container %DOCKERHUB_USER%/%IMAGE_NAME%:latest"
                     echo "⚙️ Waiting for container to initialize..."
-                    sh 'sleep 5'
-                    echo "🌐 Checking if application is reachable at http://localhost:5000"
-                    sh 'curl -I http://localhost:5000 || true'  // Print headers, continue even if curl fails
-                    echo "🧹 Stopping and removing test container..."
-                    sh 'docker stop test_container && docker rm test_container'
-                    echo "✅ Test container ran successfully and cleaned up!"
+                    bat 'timeout /t 10'
+                    echo "🌐 Checking if application is reachable..."
+                    bat 'curl http://localhost:5000'
+                    echo "🧹 Cleaning up test container..."
+                    bat 'docker stop test_container && docker rm test_container'
                 }
             }
         }
@@ -49,10 +47,9 @@ pipeline {
             steps {
                 script {
                     echo "🚀 Logging into Docker Hub..."
-                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                    echo "📦 Pushing image to Docker Hub: $DOCKERHUB_USER/$IMAGE_NAME:latest"
-                    sh 'docker push $DOCKERHUB_USER/$IMAGE_NAME:latest'
-                    echo "✅ Docker image pushed successfully to Docker Hub."
+                    bat "echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin"
+                    echo "📦 Pushing image to Docker Hub..."
+                    bat "docker push %DOCKERHUB_USER%/%IMAGE_NAME%:latest"
                 }
             }
         }
@@ -61,14 +58,12 @@ pipeline {
     post {
         success {
             echo "🎯 BUILD SUCCESSFUL! 🎉"
-            echo "✅ Docker image pushed to Docker Hub: $DOCKERHUB_USER/$IMAGE_NAME:latest"
         }
         failure {
-            echo "❌ BUILD FAILED! Please check the logs above for details."
+            echo "❌ BUILD FAILED! Please check the logs."
         }
         always {
-            echo "📜 Pipeline execution completed."
-            echo "🕒 Build finished at: ${new Date()}"
+            echo "📜 Pipeline completed at ${new Date()}"
         }
     }
 }
