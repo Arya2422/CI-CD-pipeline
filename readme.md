@@ -1,13 +1,7 @@
 # Flask + MySQL Docker Compose App
 
-This project demonstrates a simple **multi-container** application using **Flask** (Python) and **MySQL**, orchestrated by **Docker Compose**.
+1. This project demonstrates a simple **multi-container** application using **Flask** (Python) and **MySQL**, orchestrated by **Docker Compose**.
+2. Design and implement a CI/CD pipeline that integrates Docker, GitHub, and Jenkins.
 
 ---
 
-## 🚀 Setup
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/yourusername/flask-mysql-compose.git
-cd flask-mysql-compose
